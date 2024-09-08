@@ -1,0 +1,29 @@
+provider "aws" {
+  region = "us-east-1"  # Change to your preferred region
+}
+
+resource "aws_sns_topic" "cpu_utilization_topic" {
+  name = "cpu-utilization-topic"
+}
+
+resource "aws_cloudwatch_metric_alarm" "high_cpu_alarm" {
+  alarm_name                = "HighCPUUtilization"
+  alarm_description         = "This alarm triggers when CPU utilization is above 60% for 2 consecutive periods."
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = "2"
+  metric_name               = "CPUUtilization"
+  namespace                 = "AWS/EC2"
+  period                    = "300"
+  statistic                 = "Average"
+  threshold                 = "60"
+  alarm_actions             = [aws_sns_topic.cpu_utilization_topic.arn]
+  dimensions = {
+    InstanceId = "i-0fc192a50566689a5"  # Replace with your instance ID
+  }
+}
+
+resource "aws_sns_topic_subscription" "email_subscription" {
+  topic_arn = aws_sns_topic.cpu_utilization_topic.arn
+  protocol  = "email"
+  endpoint  = "rai.kalpnath@gmail.com"  # Replace with your email address
+}
